@@ -1,0 +1,30 @@
+# Node.js specific
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.eslintcache
+.nyc_output
+
+# Editor config files
+.editorconfig
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Test files
+coverage/
+test/
+
+# Temporary files
+*.swp
+*.bak
+*.tmp
+*.log
+*.pid
+*.sock
+*.sync
+
+# Environment variables
+.env
+.env.*
