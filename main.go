@@ -64,16 +64,11 @@ func main() {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	// Create a custom client with the transport and set timeout
-	client := &http.Client{
-		Transport: transport,
-	}
-
 	// Proxy handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		targetURL := getNextProxyInstance()
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
-		proxy.Transport = client.Transport
+		proxy.Transport = transport
 
 		logger.Info("Proxying request: "+targetURL.String()+r.URL.String(),
 			zap.String("method", r.Method),
