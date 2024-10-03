@@ -42,6 +42,10 @@ The **Generic Proxy Load Balancer** is a Node.js-based load balancer that distri
 
 The Generic Proxy Load Balancer is designed to be used in conjunction with the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy) project. Set up the Generic NodeJS Proxy instances and configure the `PROXY_INSTANCES` environment variable to point to those instances.
 
+## Migration from Node.js to Go
+This project was originally implemented using Node.js and has now been migrated to Go for improved performance and memory efficiency. 
+
+The last version of the Node.js implementation can be found under the tag `v1.0-node`.
 
 ## Customization
 
