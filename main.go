@@ -59,16 +59,28 @@ func main() {
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+		IdleConnTimeout:       30 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: 10 * time.Second,
+	}
+
+	// Create a custom client with the transport and set timeout
+	client := &http.Client{
+		Transport: transport,
 	}
 
 	// Proxy handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		targetURL := getNextProxyInstance()
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
-		proxy.Transport = transport
+		proxy.Transport = client.Transport
+		proxy.Director = func(req *http.Request) {
+			req.URL.Scheme = targetURL.Scheme
+			req.URL.Host = targetURL.Host
+			req.Header.Set("X-Forwarded-Host", req.Host)
+			req.Header.Set("X-Origin-Host", targetURL.Host)
+		}
 
 		logger.Info("Proxying request: "+targetURL.String()+r.URL.String(),
 			zap.String("method", r.Method),
