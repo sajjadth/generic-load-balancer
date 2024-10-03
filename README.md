@@ -1,63 +1,79 @@
 # Generic Proxy Load Balancer
 
-The **Generic Proxy Load Balancer** is a Node.js-based load balancer that distributes incoming traffic across multiple proxy instances, providing a simple and effective way to manage load distribution. It is designed to work seamlessly with the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy) project to create a scalable proxy solution.
+The **Generic Proxy Load Balancer** is a Go-based load balancer that distributes incoming traffic across multiple proxy instances, an efficient and scalable way to manage load distribution. It is designed to work seamlessly with the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy) project to create a scalable proxy solution.
 
 ## Features
 
 - **Round-Robin Load Balancing:** Distributes requests evenly across all proxy instances using a round-robin algorithm.
-- **Proxy Integration:** Designed to integrate with multiple proxy instances, such as the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy).
-- **Environment Configuration:** Easily configure proxy instances through environment variables.
-- **Automatic Path Rewriting:** Optionally rewrites paths for proxied requests.
+- **Proxy Integration:** Designed to integrate with multiple proxy instances, such as the [Generic Proxy](https://github.com/sajjadth/generic-proxy).
+- **High Performance**: Built with Go for optimized performance and lower memory usage.
+- **Proxy Integration**Designed to integrate with multiple proxy instances.
+- **Environment Configuration**: Easily configure proxy instances through environment variables.
+- **Zap Logging**: Built-in structured logging with Zap for better observability.
+- **Custom Timeout & Transport**: Custom transport for optimized network usage and connection handling.
 
 ## Prerequisites
 
-- Node.js (v14.x or later)
-- NPM (Node Package Manager)
+- Go (v1.22.4 or later)
 
-## Installation
+* Git
+
+## Setup Instructions
 
 1. Clone the repository:
+   ```
+   git clone <repository_url>
+   cd <repository_directory>
+   ```
+2. Create a .env file:
+
+   - Copy the provided environment variables template and add your specific values.
+
    ```bash
-   git clone https://github.com/sajjadth/generic-proxy-load-balancer.git
-   cd generic-proxy-load-balancer
-2. nstall dependencies:
-    ```bash
-    npm install
-3. Create a .env file in the root of your project and configure your environment variables:
-    ```bash
     PORT=3000
     PROXY_INSTANCES=http://localhost:5001,http://localhost:5002
-    
-- `PORT`: The port on which the load balancer will run (default is 3000 if not specified).
-- `PROXY_INSTANCES`: A comma-separated list of proxy instance URLs.
+
+   ```
+
+3. Install dependencies:
+   ```
+   go mod tidy
+   ```
+4. Run the application:
+   ```
+   go run main.go
+   ```
 
 ## Usage
 
 1. Start the load balancer:
-    ```bash
-    npm start
-2. The load balancer will run on `http://localhost:3000` (or the port specified in your `.env` file) and will forward incoming traffic to the configured proxy instances in a round-robin manner.
+   ```bash
+   npm start
+   ```
+2. The load balancer will run on `http://localhost:8080` (or the port specified in your `.env` file) and will forward incoming traffic to the configured proxy instances in a round-robin manner.
 
-## Integration with Generic NodeJS Proxy
+## Integration with Generic Proxy
 
-The Generic Proxy Load Balancer is designed to be used in conjunction with the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy) project. Set up the Generic NodeJS Proxy instances and configure the `PROXY_INSTANCES` environment variable to point to those instances.
+The Generic Proxy Load Balancer is designed to be used in conjunction with the [Generic Proxy](https://github.com/sajjadth/generic-proxy) project. Set up the Generic Proxy instances and configure the `PROXY_INSTANCES` environment variable to point to those instances.
 
 ## Migration from Node.js to Go
-This project was originally implemented using Node.js and has now been migrated to Go for improved performance and memory efficiency. 
+
+This project was originally implemented using Node.js and has now been migrated to Go for improved performance and memory efficiency.
 
 The last version of the Node.js implementation can be found under the tag `v1.0-node`.
 
 ## Customization
 
-You can modify `index.js` to add custom logic, such as:
+You can modify `main.go` to add custom logic, such as:
+
 - Changing request headers
 - Adding authentication
 - Logging requests
 
 ## Troubleshooting
 
-- Ensure your `TARGET_URL` is correct in the `.env` file.
-- Make sure the target API is reachable from your server.
+- Ensure your `PROXY_INSTANCES` is correct in the `.env` file.
+- Make sure the proxy instances are reachable from the server.
 
 ## Contributing
 
