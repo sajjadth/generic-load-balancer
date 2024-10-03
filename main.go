@@ -75,7 +75,7 @@ func main() {
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 		proxy.Transport = client.Transport
 
-		logger.Info("Proxying request: "+r.URL.String()+" + "+targetURL.String(),
+		logger.Info("Proxying request: "+targetURL.String()+r.URL.String(),
 			zap.String("method", r.Method),
 			zap.String("remote_addr", r.RemoteAddr),
 			zap.String("forwarded_to", targetURL.String()),
