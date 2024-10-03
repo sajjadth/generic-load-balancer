@@ -1,9 +1,9 @@
-# Node.js specific
-node_modules/
-npm-debug.log*
-yarn-error.log*
-.eslintcache
-.nyc_output
+# Go build files
+/bin/
+/pkg/
+*.exe
+*.out
+*.test
 
 # Editor config files
 .editorconfig
