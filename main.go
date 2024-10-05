@@ -71,6 +71,11 @@ func main() {
 		servers = append(servers, serverURL)
 	}
 
+	// Check if servers list is non-empty
+	if len(servers) == 0 {
+		logger.Fatal("No valid proxy instances found")
+	}
+
 	// Create a server pool
 	pool := &ServerPool{
 		servers: servers,
@@ -84,5 +89,7 @@ func main() {
 	// Start the load balancer
 	http.HandleFunc("/", pool.loadBalancer)
 	logger.Info("Load balancer server is running", zap.String("port", port))
-	logger.Fatal("Server failed", zap.Error(http.ListenAndServe((":"+port), nil)))
+
+	// Use 0.0.0.0 to make the server accessible externally
+	logger.Fatal("Server failed", zap.Error(http.ListenAndServe("0.0.0.0:"+port, nil)))
 }
