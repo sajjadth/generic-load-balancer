@@ -3,6 +3,7 @@ package main
 import (
 	"cmp"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -10,10 +11,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
 
 type ServerPool struct {
 	servers []*url.URL
@@ -30,6 +34,15 @@ func (p *ServerPool) loadBalancer(w http.ResponseWriter, r *http.Request) {
 	target := p.getNextServer()
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
+	proxy.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
 	// Rewrite the request's URL to match the target
 	r.URL.Scheme = target.Scheme
 	r.URL.Host = target.Host
@@ -37,13 +50,18 @@ func (p *ServerPool) loadBalancer(w http.ResponseWriter, r *http.Request) {
 	// Log which server is handling the request
 	log.Printf("Forwarding request to: %s", target.String())
 
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		logger.Error("Upstream server error", zap.Error(err))
+		http.Error(w, "Upstream server error", http.StatusBadGateway)
+	}
+
 	// Forward the request
 	proxy.ServeHTTP(w, r)
 }
 
 func main() {
 	// Initialize Zap logger
-	logger, _ := zap.NewProduction()
+	logger, _ = zap.NewProduction()
 	defer logger.Sync() // flushes buffer, if any
 
 	// Load .env file if not running in Railway environment
