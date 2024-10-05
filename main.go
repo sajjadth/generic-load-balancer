@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -8,16 +9,36 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
-var (
-	proxyInstances  []*url.URL
-	currentInstance uint64
-)
+type ServerPool struct {
+	servers []*url.URL
+	current uint64
+}
+
+func (p *ServerPool) getNextServer() *url.URL {
+	// Round-robin: get the next server
+	index := atomic.AddUint64(&p.current, 1)
+	return p.servers[int(index)%len(p.servers)]
+}
+
+func (p *ServerPool) loadBalancer(w http.ResponseWriter, r *http.Request) {
+	target := p.getNextServer()
+	proxy := httputil.NewSingleHostReverseProxy(target)
+
+	// Rewrite the request's URL to match the target
+	r.URL.Scheme = target.Scheme
+	r.URL.Host = target.Host
+
+	// Log which server is handling the request
+	log.Printf("Forwarding request to: %s", target.String())
+
+	// Forward the request
+	proxy.ServeHTTP(w, r)
+}
 
 func main() {
 	// Initialize Zap logger
@@ -37,65 +58,30 @@ func main() {
 	if proxyList == "" {
 		logger.Fatal("PROXY_INSTANCES is not set in the environment")
 	}
-
 	// Parse the proxy instances into a slice of *url.URL
 	instances := strings.Split(proxyList, ",")
+
+	var servers []*url.URL
 	for _, instance := range instances {
-		parsedURL, err := url.Parse(instance)
+		serverURL, err := url.Parse(instance)
 		if err != nil {
 			logger.Fatal("Invalid proxy instance URL", zap.String("url", instance), zap.Error(err))
 		}
-		proxyInstances = append(proxyInstances, parsedURL)
+		servers = append(servers, serverURL)
 	}
 
-	// Function to get the next proxy instance (round-robin)
-	getNextProxyInstance := func() *url.URL {
-		index := atomic.AddUint64(&currentInstance, 1)
-		return proxyInstances[index%uint64(len(proxyInstances))]
+	// Create a server pool
+	pool := &ServerPool{
+		servers: servers,
 	}
-
-	// Define a custom transport for optimization
-	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       30 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		ResponseHeaderTimeout: 10 * time.Second,
-	}
-
-	// Create a custom client with the transport and set timeout
-	client := &http.Client{
-		Transport: transport,
-	}
-
-	// Proxy handler
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		targetURL := getNextProxyInstance()
-		proxy := httputil.NewSingleHostReverseProxy(targetURL)
-		proxy.Transport = client.Transport
-		proxy.Director = func(req *http.Request) {
-			req.URL.Scheme = targetURL.Scheme
-			req.URL.Host = targetURL.Host
-			req.Header.Set("X-Forwarded-Host", req.Host)
-			req.Header.Set("X-Origin-Host", targetURL.Host)
-		}
-
-		logger.Info("Proxying request: "+targetURL.String()+r.URL.String(),
-			zap.String("method", r.Method),
-			zap.String("remote_addr", r.RemoteAddr),
-			zap.String("forwarded_to", targetURL.String()),
-		)
-
-		proxy.ServeHTTP(w, r)
-	})
 
 	// Start the load balancer server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080" // Default to port 8080 if not specified
 	}
+	// Start the load balancer
+	http.HandleFunc("/", pool.loadBalancer)
 	logger.Info("Load balancer server is running", zap.String("port", port))
 	logger.Fatal("Server failed", zap.Error(http.ListenAndServe(":"+port, nil)))
 }
