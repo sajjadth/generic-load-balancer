@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -76,12 +77,12 @@ func main() {
 	}
 
 	// Start the load balancer server
-	port := os.Getenv("PORT")
+	port := cmp.Or(os.Getenv("PORT"), "3000")
 	if port == "" {
 		port = "8080" // Default to port 8080 if not specified
 	}
 	// Start the load balancer
 	http.HandleFunc("/", pool.loadBalancer)
 	logger.Info("Load balancer server is running", zap.String("port", port))
-	logger.Fatal("Server failed", zap.Error(http.ListenAndServe(":"+port, nil)))
+	logger.Fatal("Server failed", zap.Error(http.ListenAndServe((":"+port), nil)))
 }
