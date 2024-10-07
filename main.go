@@ -2,7 +2,6 @@ package main
 
 import (
 	"cmp"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -57,7 +56,7 @@ func (p *ServerPool) loadBalancer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log which server is handling the request
-	log.Printf("Forwarding request to: %s", target.String())
+	logger.Info("Forwarding request target: " + target.String())
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		logger.Error("Upstream server error", zap.Error(err))
