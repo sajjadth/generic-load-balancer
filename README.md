@@ -1,6 +1,6 @@
-# Generic Proxy Load Balancer
+# Generic Load Balancer
 
-The **Generic Proxy Load Balancer** is a Go-based load balancer that distributes incoming traffic across multiple proxy instances, an efficient and scalable way to manage load distribution. It is designed to work seamlessly with the [Generic NodeJS Proxy](https://github.com/sajjadth/generic-nodejs-proxy) project to create a scalable proxy solution.
+The **Generic Load Balancer** is a Go-based load balancer that distributes incoming traffic across multiple proxy instances, an efficient and scalable way to manage load distribution. It is designed to work seamlessly with the [Generic Proxy](https://github.com/sajjadth/generic-proxy) project to create a scalable proxy solution.
 
 ## Features
 
