@@ -37,15 +37,24 @@ func (p *ServerPool) loadBalancer(w http.ResponseWriter, r *http.Request) {
 	proxy.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
+			Timeout:   60 * time.Second, // Increase the timeout
+			KeepAlive: 60 * time.Second,
 		}).DialContext,
-		TLSHandshakeTimeout: 10 * time.Second,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second, // Timeout waiting for headers
+		ExpectContinueTimeout: 1 * time.Second,
 	}
 
 	// Rewrite the request's URL to match the target
 	r.URL.Scheme = target.Scheme
 	r.URL.Host = target.Host
+	r.Host = target.Host
+	r.URL.Path = strings.TrimPrefix(r.URL.Path, "/")
+
+	proxy.ModifyResponse = func(response *http.Response) error {
+		response.Header.Set("Connection", "close")
+		return nil
+	}
 
 	// Log which server is handling the request
 	log.Printf("Forwarding request to: %s", target.String())
